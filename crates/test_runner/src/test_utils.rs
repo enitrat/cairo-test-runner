@@ -1,18 +1,155 @@
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_runner::{Arg, RunResultValue, SierraCasmRunner, StarknetState};
+use cairo_lang_runner::casm_run::RunFunctionResult;
+use cairo_lang_runner::{build_hints_dict, casm_run, initialize_vm, Arg, CairoHintProcessor, RunResult, RunResultStarknet, RunResultValue, RunnerError, SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::ids::FunctionId;
 use cairo_lang_sierra::program::{Function, ProgramArtifact, VersionedProgram};
+use cairo_vm::hint_processor::hint_processor_definition::HintProcessor;
+use cairo_vm::serde::deserialize_program::{HintParams, ReferenceManager};
+use cairo_vm::types::builtin_name::BuiltinName;
+use cairo_vm::types::layout_name::LayoutName;
+use cairo_vm::types::program::Program;
+use cairo_vm::types::relocatable::MaybeRelocatable;
+use cairo_vm::vm::errors::cairo_run_errors::CairoRunError;
+use cairo_vm::vm::runners::cairo_runner::{CairoRunner, RunResources};
 use log::debug;
+use num_bigint::BigInt;
 use crate::deserialization::Args;
 use starknet_types_core::felt::Felt;
+use std::collections::HashMap;
 use std::fs;
+use itertools::chain;
+use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::str::FromStr;
 
 const DEFAULT_MAIN_FUNCTION: &str = "::main";
 const EXECUTABLE_NAME: &str = "starknet_executable";
 
-pub fn load_and_run_cairo_function(function_name: &str, args: &str) -> Result<Vec<Felt>> {
+// struct CustomSierraCasmRunner(SierraCasmRunner);
+
+// impl Deref for CustomSierraCasmRunner {
+//     type Target = SierraCasmRunner;
+
+//     fn deref(&self) -> &Self::Target {
+//         &self.0
+//     }
+// }
+
+// impl DerefMut for CustomSierraCasmRunner {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         &mut self.0
+//     }
+// }
+
+// macro_rules! by_id {
+//     ($field:ident) => {{
+//         let temp: HashMap<_, _> = test_target_raw
+//             .sierra_program
+//             .program
+//             .$field
+//             .iter()
+//             .map(|f| (f.id.id, f))
+//             .collect();
+
+//         temp
+//     }};
+// }
+
+
+// impl CustomSierraCasmRunner {
+//         /// Runs the vm starting from a function in the context of a given starknet state.
+//         pub fn run_function_with_starknet_context(
+//             &self,
+//             func: &Function,
+//             args: &[Arg],
+//             available_gas: Option<usize>,
+//             starknet_state: StarknetState,
+//         ) -> Result<RunResultStarknet, RunnerError> {
+//             let initial_gas = self.get_initial_available_gas(func, available_gas)?;
+//             let (entry_code, builtins) = self.create_entry_code(func, args, initial_gas)?;
+//             let footer = SierraCasmRunner::create_code_footer();
+//             let (hints_dict, string_to_hint) =
+//                 build_hints_dict(chain!(&entry_code, &self.get_casm_program().instructions));
+//             let assembled_program = self.get_casm_program().clone().assemble_ex(&entry_code, &footer);
+
+
+//             let funcs = by_id!(funcs);
+//             let type_declarations = by_id!(type_declarations);
+
+
+//             // let data: Vec<MaybeRelocatable> = assembled_program.bytecode.iter().map(Felt::from).map(MaybeRelocatable::from).collect();
+//             // let program = Program::new(
+//             //     builtins,
+//             //     data,
+//             //     Some(0),
+//             //     hints_dict,
+//             //     ReferenceManager { references: Vec::new() },
+//             //     HashMap::new(),
+//             //     vec![],
+//             //     None,
+//             // ).expect("Failed to create program");
+
+//             let res = CairoRunner::new(&program, LayoutName::all_cairo, false, true)
+//                 .map_err(CairoRunError::from)
+//                 .map_err(Box::new).expect("Failed to create runner");
+
+//             let mut hint_processor = CairoHintProcessor {
+//                 runner: Some(self),
+//                 starknet_state,
+//                 string_to_hint,
+//                 run_resources: RunResources::default(),
+//                 syscalls_used_resources: Default::default(),
+//             };
+
+//             let res = casm_run::run_function(assembled_program.bytecode.iter(), builtins, initialize_vm, &mut hint_processor, hints_dict)?;
+
+//             match res {
+//                 Ok(run_function_result) => {
+//                     let ap = run_function_result.ap;
+
+//                     let return_types = self.generic_id_and_size_from_concrete(&func.signature.ret_types);
+
+//                     let (results_data, gas_counter) = SierraCasmRunner::get_results_data(
+//                         &case.test_details.return_types,
+//                         &runner.relocated_memory,
+//                         ap,
+//                     );
+//                     assert_eq!(results_data.len(), 1);
+
+//                     let (_, values) = results_data[0].clone();
+//                     let value = SierraCasmRunner::handle_main_return_value(
+//                         // Here we assume that all test either panic or do not return any value
+//                         // This is true for all test right now, but in case it changes
+//                         // this logic will need to be updated
+//                         Some(0),
+//                         values,
+//                         &runner.relocated_memory,
+//                     );
+
+//                     Ok(RunResultStarknet {
+//                         gas_counter,
+//                         memory: runner.relocated_memory,
+//                         value,
+//                         starknet_state: hint_processor.starknet_state,
+//                         used_resources: all_used_resources,
+//                         profiling_info,
+//                     })
+//                 }
+//                 Err(err) => Err(RunnerError::CairoRunError(err)),
+//             };
+//         }
+
+//     pub fn handle_main_return_value(
+//         inner_type_size: Option<i16>,
+//         values: Vec<Felt>,
+//         cells: &[Option<Felt>],) -> RunResultValue {
+//         println!("Custom handle_main_return_value");
+//         // Use inner SierraCasmRunner to handle the return value
+//         SierraCasmRunner::handle_main_return_value(inner_type_size, values, cells)
+//     }
+// }
+
+pub fn load_and_run_cairo_function<T: TryFrom<Vec<Felt>>>(function_name: &str, args: &str) -> Result<T> {
     debug!("Loading and running Cairo function: {}", function_name);
     let sierra_path = Path::new("../../cairo_project/target/dev/sample_project.sierra.json");
     let sierra_program = fs::read_to_string(sierra_path)?;
@@ -39,13 +176,14 @@ pub fn load_and_run_cairo_function(function_name: &str, args: &str) -> Result<Ve
     let result = runner.run_function_with_starknet_context(
         function,
         &runner_args,
-        None,
+        Some(usize::MAX),
         StarknetState::default(),
     )?;
 
     match result.value {
-        RunResultValue::Success(values) => Ok(values),
-        RunResultValue::Panic(values) => anyhow::bail!("Function panicked: {:?}", values),
+        RunResultValue::Success(values) => T::try_from(values)
+            .map_err(|_| anyhow!("Failed to convert function result to the expected type")),
+        RunResultValue::Panic(values) => bail!("Function panicked: {:?}", values),
     }
 }
 

@@ -66,13 +66,14 @@ pub fn generate_types(json_path: &str) -> Result<String, Box<dyn std::error::Err
                 output.push_str("}\n\n");
 
                 // Add From<Vec<Felt>> implementation
-                output.push_str(&format!("impl From<Vec<Felt>> for {} {{\n", type_info.name));
-                output.push_str("    fn from(vec: Vec<Felt>) -> Self {\n");
-                output.push_str("        Self {\n");
+                output.push_str(&format!("impl TryFrom<Vec<Felt>> for {} {{\n", type_info.name));
+                output.push_str("    type Error = String;\n");
+                output.push_str("    fn try_from(vec: Vec<Felt>) -> Result<Self, String> {\n");
+                output.push_str("        Ok(Self {\n");
                 for i in 0..type_info.fields.len() {
                     output.push_str(&format!("            field_{}: vec[{}].try_into().unwrap(),\n", i, i));
                 }
-                output.push_str("        }\n");
+                output.push_str("        })");
                 output.push_str("    }\n");
                 output.push_str("}\n\n");
             }

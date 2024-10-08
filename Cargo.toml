@@ -10,8 +10,8 @@ edition = "2021"
 
 [workspace.dependencies]
 anyhow = "1.0.89"
-cairo-lang-runner = "2.8.2"
-cairo-lang-sierra = "2.8.2"
+cairo-lang-runner = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-runner"}
+cairo-lang-sierra = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-sierra"}
 camino = "1.1.9"
 clap = "4.5.19"
 serde = { version = "1.0.210", features = ["derive"] }

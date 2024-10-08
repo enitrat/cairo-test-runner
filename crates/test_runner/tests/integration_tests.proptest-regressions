@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 722bce4f7c31687d134e59d1ac12e63bbb3687021873d718f463c49d87b66d97 # shrinks to input = 44705399434941531941218402
+cc 52e64e2d2d8aa0c6bc507c12c472e9d05024615eb59b2a25b8aab17a8f8ce572 # shrinks to input = [210178601516922923272137431]
