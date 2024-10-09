@@ -1,14 +1,16 @@
-[workspace]
-members = [
-    "crates/*",
-]
-resolver = "2"
-
-[workspace.package]
+[package]
+name = "scarb_pytest"
 version = "0.1.0"
 edition = "2021"
 
-[workspace.dependencies]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "scarb_pytest"
+crate-type = ["cdylib"]
+path = "crates/scarb-pytest/src/lib.rs"
+
+[dependencies]
+pyo3 = "0.22.0"
 anyhow = "1.0.89"
 cairo-lang-runner = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-runner"}
 cairo-lang-sierra = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-sierra"}

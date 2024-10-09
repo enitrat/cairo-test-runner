@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "cairo_test_runner"
+name = "scarb_pytest"
 path = "src/main.rs"
 
 [dependencies]
