@@ -1,9 +1,13 @@
+use std::path::Path;
+
 use anyhow::Result;
 use test_runner::manual_types::MyStruct;
 use test_runner::manual_types::{Stack, U128, U32};
 use test_runner::test_utils::load_and_run_cairo_function;
 
 use proptest::prelude::*;
+
+const SIERRA_PATH: &str = "../../cairo_project/target/dev/sample_project.sierra.json";
 
 fn reference_bytes32_words(input: u128) -> u128 {
     (input + 31) / 32
@@ -22,7 +26,7 @@ fn test_bytes32_words() -> Result<()> {
 
     for (input, expected) in test_cases {
         let args = format!("[{}]", input);
-        let result: U32 = load_and_run_cairo_function("bytes32_words", &args)?;
+        let result: U32 = load_and_run_cairo_function("bytes32_words", Path::new(SIERRA_PATH), &args)?;
         assert_eq!(expected, *result);
     }
 
@@ -32,7 +36,7 @@ fn test_bytes32_words() -> Result<()> {
 #[test]
 fn test_my_struct() -> Result<()> {
     let args = "[1, 2]";
-    let result = load_and_run_cairo_function::<MyStruct>("my_struct", args)?;
+    let result = load_and_run_cairo_function::<MyStruct>("my_struct", Path::new(SIERRA_PATH), &args)?;
     let expected = MyStruct {
         field_0: 1,
         field_1: 2,
@@ -47,7 +51,7 @@ proptest! {
     fn test_bytes32_words_prop(input in 0u128..=u128::MAX) {
         let expected = reference_bytes32_words(input);
         let args = format!("[{}]", input);
-        let result = load_and_run_cairo_function::<U128>("bytes32_words", &args).unwrap();
+        let result = load_and_run_cairo_function::<U128>("bytes32_words", Path::new(SIERRA_PATH), &args).unwrap();
 
         prop_assert_eq!(expected, *result);
     }
@@ -59,7 +63,7 @@ proptest! {
     #[test]
     fn test_stack_push(input in prop::collection::vec(0u128..=u128::MAX, 0..10), pushed_value in 0u128..=u128::MAX) {
         let args = format!("[{:?}, {}]", input, pushed_value);
-    let result: Stack = load_and_run_cairo_function("stack_push_should_add_element", &args).unwrap();
+        let result: Stack = load_and_run_cairo_function("stack_push_should_add_element", Path::new(SIERRA_PATH), &args).unwrap();
 
         let mut expected_push = input.clone();
         expected_push.push(pushed_value);
@@ -71,7 +75,7 @@ proptest! {
     #[test]
     fn test_stack_pop(input in prop::collection::vec(0u128..=u128::MAX, 1..10)) {
         let args = format!("[{:?}]", input);
-        let result: Stack = load_and_run_cairo_function("stack_pop_should_remove_last_element", &args).unwrap();
+        let result: Stack = load_and_run_cairo_function("stack_pop_should_remove_last_element", Path::new(SIERRA_PATH), &args).unwrap();
 
         let mut expected = input.clone();
         expected.pop();
@@ -83,7 +87,7 @@ proptest! {
     #[test]
     fn test_stack_pop_return(input in prop::collection::vec(0u128..=u128::MAX, 1..10)) {
         let args = format!("[{:?}]", input);
-        let result: U128 = load_and_run_cairo_function("stack_pop_should_return_last_element", &args).unwrap();
+        let result: U128 = load_and_run_cairo_function("stack_pop_should_return_last_element", Path::new(SIERRA_PATH), &args).unwrap();
 
         prop_assert_eq!(result, U128(*input.last().unwrap()));
     }
