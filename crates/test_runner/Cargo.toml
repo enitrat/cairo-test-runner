@@ -3,12 +3,16 @@ name = "test_runner"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "cairo_test_runner"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.89"
 cairo-lang-runner = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-runner"}
 cairo-lang-sierra = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-sierra"}
 camino = "1.1.9"
-clap = "4.5.19"
+clap = { version = "4.5.19", features = ["derive"] }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 starknet-types-core = "0.1.7"
@@ -23,11 +27,7 @@ itertools = "0.13.0"
 cairo-vm = "1.0.1"
 num-traits = "0.2.19"
 cairo-lang-utils = {path = "/Users/msaug/deps/cairo/crates/cairo-lang-utils"}
-
-
-[build-dependencies]
-build_utils = { path = "../build_utils" }
-
+env_logger = "0.10.0"
 
 [lib]
 path = "src/lib.rs"
