@@ -1,8 +1,8 @@
 use cairo_lang_runner::short_string::{as_cairo_short_string, as_cairo_short_string_ex};
+use cairo_lang_utils::byte_array::{BYTES_IN_WORD, BYTE_ARRAY_MAGIC};
 use itertools::Itertools;
 use num_traits::cast::ToPrimitive;
 use starknet_types_core::felt::Felt;
-use cairo_lang_utils::byte_array::{BYTES_IN_WORD, BYTE_ARRAY_MAGIC};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MyStruct {
@@ -16,9 +16,9 @@ impl TryFrom<Vec<Felt>> for MyStruct {
         Ok(Self {
             field_0: vec[0].try_into().unwrap(),
             field_1: vec[1].try_into().unwrap(),
-        })    }
+        })
+    }
 }
-
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Stack(Vec<u128>);
@@ -33,7 +33,9 @@ impl TryFrom<Vec<Felt>> for Stack {
     type Error = String;
 
     fn try_from(values: Vec<Felt>) -> Result<Self, Self::Error> {
-        Ok(Stack(from_felt_byte_array(values).map_err(|e| e.to_string())?))
+        Ok(Stack(
+            from_felt_byte_array(values).map_err(|e| e.to_string())?,
+        ))
     }
 }
 
@@ -94,7 +96,6 @@ macro_rules! impl_try_from_felt_vec_and_deref {
 
 impl_try_from_felt_vec_and_deref!(U8, u8, U16, u16, U32, u32, U64, u64, U128, u128);
 
-
 /// Formats the given felts as a debug string.
 fn format_for_debug(mut felts: IntoIter<Felt>) -> String {
     let mut items = Vec::new();
@@ -133,7 +134,11 @@ impl FormattedItem {
     }
     /// Wraps the formatted item with quote, if it's a string. Otherwise returns it as is.
     pub fn quote_if_string(self) -> String {
-        if self.is_string { format!("\"{}\"", self.item) } else { self.item }
+        if self.is_string {
+            format!("\"{}\"", self.item)
+        } else {
+            self.item
+        }
     }
 }
 
@@ -147,10 +152,16 @@ where
 
     if first_felt == Felt::from_hex(BYTE_ARRAY_MAGIC).unwrap() {
         if let Some(string) = try_format_string(values) {
-            return Some(FormattedItem { item: string, is_string: true });
+            return Some(FormattedItem {
+                item: string,
+                is_string: true,
+            });
         }
     }
-    Some(FormattedItem { item: format_short_string(&first_felt), is_string: false })
+    Some(FormattedItem {
+        item: format_short_string(&first_felt),
+        is_string: false,
+    })
 }
 
 /// Formats a `Felt`, as a short string if possible.
@@ -175,7 +186,10 @@ where
     let mut cloned_values_iter = values.clone();
 
     let num_full_words = cloned_values_iter.next()?.to_usize()?;
-    let full_words = cloned_values_iter.by_ref().take(num_full_words).collect_vec();
+    let full_words = cloned_values_iter
+        .by_ref()
+        .take(num_full_words)
+        .collect_vec();
     let pending_word = cloned_values_iter.next()?;
     let pending_word_len = cloned_values_iter.next()?.to_usize()?;
 

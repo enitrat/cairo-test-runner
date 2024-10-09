@@ -1,24 +1,11 @@
+use crate::deserialization::Args;
 use anyhow::{anyhow, bail, Result};
-use cairo_lang_runner::casm_run::RunFunctionResult;
-use cairo_lang_runner::{build_hints_dict, casm_run, initialize_vm, Arg, CairoHintProcessor, RunResult, RunResultStarknet, RunResultValue, RunnerError, SierraCasmRunner, StarknetState};
+use cairo_lang_runner::{Arg, RunResultValue, SierraCasmRunner, StarknetState};
 use cairo_lang_sierra::ids::FunctionId;
 use cairo_lang_sierra::program::{Function, ProgramArtifact, VersionedProgram};
-use cairo_vm::hint_processor::hint_processor_definition::HintProcessor;
-use cairo_vm::serde::deserialize_program::{HintParams, ReferenceManager};
-use cairo_vm::types::builtin_name::BuiltinName;
-use cairo_vm::types::layout_name::LayoutName;
-use cairo_vm::types::program::Program;
-use cairo_vm::types::relocatable::MaybeRelocatable;
-use cairo_vm::vm::errors::cairo_run_errors::CairoRunError;
-use cairo_vm::vm::runners::cairo_runner::{CairoRunner, RunResources};
 use log::debug;
-use num_bigint::BigInt;
-use crate::deserialization::Args;
 use starknet_types_core::felt::Felt;
-use std::collections::HashMap;
 use std::fs;
-use itertools::chain;
-use std::ops::{Deref, DerefMut};
 use std::path::Path;
 use std::str::FromStr;
 
@@ -55,7 +42,6 @@ const EXECUTABLE_NAME: &str = "starknet_executable";
 //     }};
 // }
 
-
 // impl CustomSierraCasmRunner {
 //         /// Runs the vm starting from a function in the context of a given starknet state.
 //         pub fn run_function_with_starknet_context(
@@ -72,10 +58,8 @@ const EXECUTABLE_NAME: &str = "starknet_executable";
 //                 build_hints_dict(chain!(&entry_code, &self.get_casm_program().instructions));
 //             let assembled_program = self.get_casm_program().clone().assemble_ex(&entry_code, &footer);
 
-
 //             let funcs = by_id!(funcs);
 //             let type_declarations = by_id!(type_declarations);
-
 
 //             // let data: Vec<MaybeRelocatable> = assembled_program.bytecode.iter().map(Felt::from).map(MaybeRelocatable::from).collect();
 //             // let program = Program::new(
@@ -149,7 +133,10 @@ const EXECUTABLE_NAME: &str = "starknet_executable";
 //     }
 // }
 
-pub fn load_and_run_cairo_function<T: TryFrom<Vec<Felt>>>(function_name: &str, args: &str) -> Result<T> {
+pub fn load_and_run_cairo_function<T: TryFrom<Vec<Felt>>>(
+    function_name: &str,
+    args: &str,
+) -> Result<T> {
     debug!("Loading and running Cairo function: {}", function_name);
     let sierra_path = Path::new("../../cairo_project/target/dev/sample_project.sierra.json");
     let sierra_program = fs::read_to_string(sierra_path)?;

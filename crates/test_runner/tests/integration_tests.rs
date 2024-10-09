@@ -1,9 +1,7 @@
 use anyhow::Result;
-use starknet_types_core::felt::Felt;
-use test_runner::manual_types::{Stack, U128, U32};
-use std::str::FromStr;
-use test_runner::test_utils::load_and_run_cairo_function;
 use test_runner::manual_types::MyStruct;
+use test_runner::manual_types::{Stack, U128, U32};
+use test_runner::test_utils::load_and_run_cairo_function;
 
 use proptest::prelude::*;
 
@@ -12,7 +10,7 @@ fn reference_bytes32_words(input: u128) -> u128 {
 }
 
 #[test]
-fn test_bytes32_words() -> Result<()>{
+fn test_bytes32_words() -> Result<()> {
     let test_cases = vec![
         ("10", 1),
         ("32", 1),
@@ -24,7 +22,7 @@ fn test_bytes32_words() -> Result<()>{
 
     for (input, expected) in test_cases {
         let args = format!("[{}]", input);
-        let result : U32= load_and_run_cairo_function("bytes32_words", &args)?;
+        let result: U32 = load_and_run_cairo_function("bytes32_words", &args)?;
         assert_eq!(expected, *result);
     }
 
@@ -34,8 +32,11 @@ fn test_bytes32_words() -> Result<()>{
 #[test]
 fn test_my_struct() -> Result<()> {
     let args = "[1, 2]";
-    let result = load_and_run_cairo_function::<MyStruct>("my_struct", &args)?;
-    let expected = MyStruct { field_0: 1, field_1: 2 };
+    let result = load_and_run_cairo_function::<MyStruct>("my_struct", args)?;
+    let expected = MyStruct {
+        field_0: 1,
+        field_1: 2,
+    };
     assert_eq!(expected, result);
     Ok(())
 }

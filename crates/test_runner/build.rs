@@ -1,6 +1,3 @@
-use std::{env, fs, path::Path, process::Command};
-use build_utils::type_generator::generate_types;
-
 fn main() {
     // // Change to the cairo_project directory
     // let cairo_project_path = Path::new("../../cairo_project");
