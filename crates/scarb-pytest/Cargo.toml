@@ -1,7 +1,7 @@
 # Taken from scarb-cairo-run
 
 [package]
-name = "scarb-cotest"
+name = "scarb-pytest"
 version.workspace = true
 edition.workspace = true
 publish = false

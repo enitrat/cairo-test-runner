@@ -2341,7 +2341,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "scarb-cotest"
+name = "scarb-metadata"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "170ebce1774a85568646ba4096827f898306665187eebd9282fee313e316518d"
+dependencies = [
+ "camino",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "scarb-pytest"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -2364,19 +2377,6 @@ dependencies = [
  "serde",
  "serde_json",
  "starknet-types-core",
- "thiserror",
-]
-
-[[package]]
-name = "scarb-metadata"
-version = "1.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170ebce1774a85568646ba4096827f898306665187eebd9282fee313e316518d"
-dependencies = [
- "camino",
- "semver",
- "serde",
- "serde_json",
  "thiserror",
 ]
 
